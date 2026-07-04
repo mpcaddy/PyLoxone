@@ -38,6 +38,12 @@ LOX_CONFIG = "loxconfig"
 
 SENDDOMAIN = "loxone_send"
 SECUREDSENDDOMAIN = "loxone_send_secured"
+CLIMATE_EVENT = "loxone_climate"
+
+# Climate preset names (translatable)
+PRESET_SCHEDULE = "schedule"
+PRESET_PAUSED_WINDOW = "paused_door_window"
+
 DEFAULT = ""
 
 ATTR_UUID = "uuid"
@@ -48,7 +54,6 @@ ATTR_COMMAND = "command"
 ATTR_DEVICE = "device"
 ATTR_AREA_CREATE = "create_areas"
 DOMAIN_DEVICES = "devices"
-CLIMATE_EVENT = "loxone_climate"
 
 CONF_ACTIONID = "uuidAction"
 CONF_SCENE_GEN = "generate_scenes"
