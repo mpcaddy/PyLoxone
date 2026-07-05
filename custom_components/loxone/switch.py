@@ -5,9 +5,9 @@ For more details about this component, please refer to the documentation at
 https://github.com/JoDehli/PyLoxone
 """
 
+from functools import cached_property
 import json
 import logging
-from functools import cached_property
 from typing import Any
 
 from homeassistant.components.switch import SwitchEntity
@@ -47,7 +47,6 @@ async def async_setup_entry(
     entities = []
 
     for switch_entity in get_all(loxconfig, ["Switch", "TimedSwitch", "Intercom"]):
-
         switch_entity = add_room_and_cat_to_value_values(loxconfig, switch_entity)
 
         if switch_entity["type"] in ["Switch"]:
@@ -323,9 +322,7 @@ class LoxoneRoomControllerOverride(LoxoneEntity, SwitchEntity):
         self.type = "RoomControllerOverride"
 
         # Use uuidAction (not unique_id) so this groups with the climate entity
-        self._attr_device_info = get_or_create_device(
-            self.uuidAction, self._base_name, "RoomControllerV2", self.room
-        )
+        self._attr_device_info = get_or_create_device(self.uuidAction, self._base_name, "RoomControllerV2", self.room)
 
     @cached_property
     def unique_id(self) -> str:
@@ -334,17 +331,13 @@ class LoxoneRoomControllerOverride(LoxoneEntity, SwitchEntity):
 
     def turn_on(self, **kwargs):
         """Trigger comfort override (mode 1)."""
-        self.hass.bus.fire(
-            SENDDOMAIN, dict(uuid=self.uuidAction, value="override/1")
-        )
+        self.hass.bus.fire(SENDDOMAIN, dict(uuid=self.uuidAction, value="override/1"))
         self._attr_is_on = True
         self.schedule_update_ha_state()
 
     def turn_off(self, **kwargs):
         """Stop the active override."""
-        self.hass.bus.fire(
-            SENDDOMAIN, dict(uuid=self.uuidAction, value="stopOverride")
-        )
+        self.hass.bus.fire(SENDDOMAIN, dict(uuid=self.uuidAction, value="stopOverride"))
         self._attr_is_on = False
         self.schedule_update_ha_state()
 
@@ -379,9 +372,7 @@ class LoxoneLightPresenceSwitch(LoxoneEntity, SwitchEntity):
     def __init__(self, **kwargs):
         self._presence_id = kwargs["presenceUuid"]
         super().__init__(**kwargs)
-        self._attr_device_info = get_or_create_device(
-            self.uuidAction, self.name, "LightControllerV2", self.room
-        )
+        self._attr_device_info = get_or_create_device(self.uuidAction, self.name, "LightControllerV2", self.room)
         self._attr_name = f"{self.name} Presence Detection"
         self.type = "LightPresenceSwitch"
 
@@ -391,16 +382,12 @@ class LoxoneLightPresenceSwitch(LoxoneEntity, SwitchEntity):
         return self._presence_id
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        self.hass.bus.async_fire(
-            SENDDOMAIN, dict(uuid=self.uuidAction + "/presence", value="on")
-        )
+        self.hass.bus.async_fire(SENDDOMAIN, dict(uuid=self.uuidAction + "/presence", value="on"))
         self._attr_is_on = True
         self.async_schedule_update_ha_state()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        self.hass.bus.async_fire(
-            SENDDOMAIN, dict(uuid=self.uuidAction + "/presence", value="off")
-        )
+        self.hass.bus.async_fire(SENDDOMAIN, dict(uuid=self.uuidAction + "/presence", value="off"))
         self._attr_is_on = False
         self.async_schedule_update_ha_state()
 

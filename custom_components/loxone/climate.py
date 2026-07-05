@@ -10,8 +10,7 @@ import logging
 from abc import ABC
 
 from homeassistant.components.climate import PLATFORM_SCHEMA, ClimateEntity
-from homeassistant.components.climate.const import (ClimateEntityFeature,
-                                                    HVACAction, HVACMode)
+from homeassistant.components.climate.const import ClimateEntityFeature, HVACAction, HVACMode
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
@@ -20,10 +19,8 @@ from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from voluptuous import All, Optional, Range
 
 from . import LoxoneEntity
-from .const import (CLIMATE_EVENT, CONF_HVAC_AUTO_MODE, PRESET_PAUSED_WINDOW,
-                    PRESET_SCHEDULE, SENDDOMAIN)
-from .helpers import (add_room_and_cat_to_value_values, get_all,
-                      get_or_create_device)
+from .const import CLIMATE_EVENT, CONF_HVAC_AUTO_MODE, PRESET_PAUSED_WINDOW, PRESET_SCHEDULE, SENDDOMAIN
+from .helpers import add_room_and_cat_to_value_values, get_all, get_or_create_device
 from .miniserver import get_miniserver_from_hass
 
 _LOGGER = logging.getLogger(__name__)
@@ -130,9 +127,7 @@ class LoxoneRoomController(LoxoneEntity, ClimateEntity, ABC):
 
         # Set supported features
         self._attr_supported_features = (
-            ClimateEntityFeature.TARGET_TEMPERATURE
-            | ClimateEntityFeature.TURN_OFF
-            | ClimateEntityFeature.TURN_ON
+            ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.TURN_OFF | ClimateEntityFeature.TURN_ON
         )
 
         # Flatten UUID values - some might be lists (e.g., "temperatures")
@@ -143,9 +138,7 @@ class LoxoneRoomController(LoxoneEntity, ClimateEntity, ABC):
             else:
                 self._all_uuids.add(value)
 
-        self._attr_device_info = get_or_create_device(
-            self.unique_id, self.name, self.type, self.room
-        )
+        self._attr_device_info = get_or_create_device(self.unique_id, self.name, self.type, self.room)
 
     async def event_handler(self, event):
         update = False
@@ -342,9 +335,7 @@ class LoxoneRoomControllerV2(LoxoneEntity, ClimateEntity, ABC):
         cool_possible = possible_capabilities & 2
         self._range_possible = bool(heat_possible and cool_possible)
 
-        self._attr_device_info = get_or_create_device(
-            self.unique_id, self.name, self.type, self.room
-        )
+        self._attr_device_info = get_or_create_device(self.unique_id, self.name, self.type, self.room)
 
     async def async_added_to_hass(self):
         """Register event listener once entity is added to HA."""
@@ -388,10 +379,8 @@ class LoxoneRoomControllerV2(LoxoneEntity, ClimateEntity, ABC):
             self.schedule_update_ha_state()
 
     def get_state_value(self, name, default=None):
-        uuid = self._stateAttribUuids.get(name)
-        if uuid is None:
-            return default
-        return self._stateAttribValues.get(uuid, default)
+        uuid = self._stateAttribUuids.get(name, None)
+        return self._stateAttribValues.get(uuid, default) if uuid is not None else default
 
     @property
     def extra_state_attributes(self):
@@ -503,6 +492,10 @@ class LoxoneRoomControllerV2(LoxoneEntity, ClimateEntity, ABC):
     @property
     def temperature_unit(self) -> str:
         """Return the unit of measurement used by the platform."""
+        # The Loxone Config app allows the designer to set an arbitrary
+        # format string for the room controller's input temperature sensor.
+        # We assume that the format string contains the unit of temperature,
+        # and default to Celsius if not.
         format_str = self.details.get("format")
 
         if format_str is None:
@@ -519,6 +512,7 @@ class LoxoneRoomControllerV2(LoxoneEntity, ClimateEntity, ABC):
     @property
     def target_temperature(self) -> float | None:
         """Return the temperature we try to reach."""
+
         return self.get_state_value("tempTarget")
 
     @property
@@ -548,9 +542,7 @@ class LoxoneRoomControllerV2(LoxoneEntity, ClimateEntity, ABC):
 
     def set_hvac_mode(self, hvac_mode: str):
         """Set new target hvac mode."""
-        target_mode = (
-            self._autoMode if hvac_mode == HVACMode.AUTO else OPMODETOLOXONE[hvac_mode]
-        )
+        target_mode = self._autoMode if hvac_mode == HVACMode.AUTO else OPMODETOLOXONE[hvac_mode]
 
         self.hass.bus.fire(
             SENDDOMAIN,
@@ -562,18 +554,12 @@ class LoxoneRoomControllerV2(LoxoneEntity, ClimateEntity, ABC):
         """Set new preset mode."""
         if preset_mode == PRESET_PAUSED_WINDOW:
             return  # Informational only — controlled by window sensor
-        mode_id = next(
-            (mode["id"] for mode in self._modeList if mode["name"] == preset_mode), None
-        )
+        mode_id = next((mode["id"] for mode in self._modeList if mode["name"] == preset_mode), None)
         if mode_id is not None:
             if mode_id == "stop":
-                self.hass.bus.fire(
-                    SENDDOMAIN, dict(uuid=self.uuidAction, value="stopOverride")
-                )
+                self.hass.bus.fire(SENDDOMAIN, dict(uuid=self.uuidAction, value="stopOverride"))
             else:
-                self.hass.bus.fire(
-                    SENDDOMAIN, dict(uuid=self.uuidAction, value=f"override/{mode_id}")
-                )
+                self.hass.bus.fire(SENDDOMAIN, dict(uuid=self.uuidAction, value=f"override/{mode_id}"))
             self.schedule_update_ha_state()
 
 
